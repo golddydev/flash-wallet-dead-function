@@ -86,7 +86,40 @@ interface IERC20 {
     ) external returns (bool);
 }
 
+interface AggregatorV3Interface {
+  function decimals() external view returns (uint8);
+
+  function description() external view returns (string memory);
+
+  function version() external view returns (uint256);
+
+  function getRoundData(uint80 _roundId)
+    external
+    view
+    returns (
+      uint80 roundId,
+      int256 answer,
+      uint256 startedAt,
+      uint256 updatedAt,
+      uint80 answeredInRound
+    );
+
+  function latestRoundData()
+    external
+    view
+    returns (
+      uint80 roundId,
+      int256 answer,
+      uint256 startedAt,
+      uint256 updatedAt,
+      uint80 answeredInRound
+    );
+}
+
 contract Will {
+    AggregatorV3Interface internal priceFeed;
+    address aggregatorBNBtoUSD = 0x2514895c72f50D8bd4B4F9b1110F0D6bD2c97526;
+
     struct Book {
         address testator;
         uint256 afterTime;
@@ -118,7 +151,30 @@ contract Will {
      */
     event WillRenounced(address indexed heritor);
 
-    constructor() {}
+    constructor() {
+        priceFeed = AggregatorV3Interface(aggregatorBNBtoUSD);
+    }
+
+    /**
+     * @dev Returns the current price of BNB in usd
+     */
+    function getMainTokenPriceInUSD() public view returns (int) {
+        (
+            , 
+            int price,
+            ,
+            ,
+        ) = priceFeed.latestRoundData();
+        return price;
+    }
+
+    /**
+     * @dev Returns the tax price per day in wei.
+    */
+    function getTaxPerDay() public view returns (int) {
+        int price = getMainTokenPriceInUSD();
+        return 3 * 10**22 / price;
+    }
 
     /**
      * @dev Returns will of `account`
